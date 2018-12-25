@@ -13,7 +13,6 @@
 #include <dlib/string.h>
 #include <dlib/image_processing/frontal_face_detector.h>
 
-#include "capture_v4l.h"
 
 #define DLIB_JPEG_SUPPORT
 
@@ -64,40 +63,43 @@ Java_com_example_hungpn_facerecognition_MainActivity_stringFromJNI(
 }
 
 extern "C" JNIEXPORT jint JNICALL
-JNI_METHOD(captureCamera)(JNIEnv *env, jobject) {
-    Mat imgbuf, img;
-    int fd;
-    fd = open("/dev/video0", O_RDWR);
-    if (fd == -1) {
-        perror("Opening video device");
-        return -1;
-    }
-    print_caps(fd);
-    init_mmap(fd);
-    start_capture(fd);
-
-    capture_image(fd);
-    imgbuf = Mat(FRAME_HEIGHT, FRAME_WIDTH, CV_8U, (void *) buffer);
-    img = imdecode(imgbuf, IMREAD_COLOR);
-    //imwrite("/sdcard/captured_img.jpg", img);
-    return 100;
-}
-
-extern "C" JNIEXPORT jint JNICALL
 JNI_METHOD(faceRecognition)(JNIEnv *env, jobject) {
-    Mat img_inp;
-    //img_inp = imread("lena.jpg");
-    //dlib::cv_image<dlib::rgb_pixel> cimg(img_inp);
+    // khai bao bo detect face.
+    frontal_face_detector detector = get_frontal_face_detector();
+    // khai bao bo tim ra 5 diem tren mat nguoi ( mat mui mieng) de can chinh mat nguoi
+    shape_predictor sp;
+    // load model can chinh khuon mat
+    deserialize("/sdcard/GR2/shape_predictor_5_face_landmarks.dat") >> sp;
+    anet_type net;
+    // load model trich chon dac trung khuon mat
+    deserialize("/sdcard/GR2/dlib_face_recognition_resnet_model_v1.dat") >> net;
 
-    //const long w = cimg.nc();
-    //const long h = cimg.nr();
+    // Khai bao anh
+    cv::Mat temp;
 
-    // face_detector objectstringFromJNI
-    //dlib::frontal_face_detector face_detector = dlib::get_frontal_face_detector();
-    //dlib::shape_predictor sp;   //shape predictor 5 landmarks
-    //dlib::deserialize("shape_predictor_5_face_landmarks.data") >> sp;
-    //dlib::deserialize("shape_predictor_68_face_landmarks.data") >> sp;
-    return 100;
+    temp = imread("/sdcard/GR2/lena.jpg", CV_LOAD_IMAGE_COLOR);
+
+    // chuyen anh dang cv:: Mat ve dang chuan cua dlib
+    //cv::resize(temp,temp, (480, 320));
+    cv_image<bgr_pixel> img(temp);
+
+    // khai bao vec to chua cac khuon mat detect duoc
+    std::vector<matrix<rgb_pixel>> faces;
+
+    // can chinh cac khuon mat vua tim duoc
+    for (auto face : detector(img))
+    {
+        auto shape = sp(img, face);
+        matrix<rgb_pixel> face_chip;
+        extract_image_chip(img, get_face_chip_details(shape, 150, 0.25), face_chip);
+        faces.push_back(move(face_chip));
+    }
+    if (faces.size() == 0)
+    {
+        return 99;
+    }
+
+return 100;
 }
 
 
