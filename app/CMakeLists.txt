@@ -14,11 +14,11 @@ include_directories(${pathToOpenCV}/jni/include)
 
 #add thu vien lib_opencv
 add_library(lib_opencv SHARED IMPORTED )
-set_target_properties(lib_opencv PROPERTIES IMPORTED_LOCATION D:/GR2/FaceRecognition/app/src/main/jniLibs/opencvLibs/${ANDROID_ABI}/libopencv_java3.so)
+set_target_properties(lib_opencv PROPERTIES IMPORTED_LOCATION D:/GR2/dlib_opencv_face_recognition/app/src/main/jniLibs/opencvLibs/${ANDROID_ABI}/libopencv_java3.so)
 
 # Duong dan den thu muc dlib include
 #set include directories for dlib
-include_directories(D:/GR2/FaceRecognition/app/src/main/jniLibs/dlib/include)
+include_directories(D:/GR2/dlib_opencv_face_recognition/app/src/main/jniLibs/dlib/include)
 
 # EDIT add dlib
 # Link to libdlib.so.
@@ -28,7 +28,7 @@ include_directories(D:/GR2/FaceRecognition/app/src/main/jniLibs/dlib/include)
 # the most valuable thing of this sample, the rest are pretty much normal cmake
 # add thu vien dlib
 add_library(lib_dlib SHARED IMPORTED)
-set_target_properties(lib_dlib PROPERTIES IMPORTED_LOCATION D:/GR2/FaceRecognition/app/src/main/jniLibs/dlib/lib/${ANDROID_ABI}/libdlib.so)
+set_target_properties(lib_dlib PROPERTIES IMPORTED_LOCATION D:/GR2/dlib_opencv_face_recognition/app/src/main/jniLibs/dlib/lib/${ANDROID_ABI}/libdlib.so)
 
 
 # Creates and names a library, sets it as either STATIC
