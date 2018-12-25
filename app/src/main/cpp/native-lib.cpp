@@ -80,26 +80,73 @@ JNI_METHOD(faceRecognition)(JNIEnv *env, jobject) {
     temp = imread("/sdcard/GR2/lena.jpg", CV_LOAD_IMAGE_COLOR);
 
     // chuyen anh dang cv:: Mat ve dang chuan cua dlib
-    //cv::resize(temp,temp, (480, 320));
     cv_image<bgr_pixel> img(temp);
 
     // khai bao vec to chua cac khuon mat detect duoc
     std::vector<matrix<rgb_pixel>> faces;
 
-    // can chinh cac khuon mat vua tim duoc
+    // Run the face detector on the image, and for each face extract a
+    // copy that has been normalized to 150x150 pixels in size and appropriately rotated
+    // and centered.
+
     for (auto face : detector(img))
     {
         auto shape = sp(img, face);
         matrix<rgb_pixel> face_chip;
-        extract_image_chip(img, get_face_chip_details(shape, 150, 0.25), face_chip);
-        faces.push_back(move(face_chip));
-    }
-    if (faces.size() == 0)
-    {
-        return 99;
+        //extract_image_chip(img, get_face_chip_details(shape, 150, 0.25), face_chip);
+        //faces.push_back(face_chip);
     }
 
-return 100;
+    // kiem tra xem co khuon mat nao duoc tim thay hay khong
+    if (faces.size() == 0)
+    {
+    }
+
+    // khai bao va tinh toan vec to 128 dac trung cho cac khuon mat vua tim duoc
+    std::vector<matrix<float, 0, 1>> face_descriptors = net(faces);
+    // dung opencv de load model SVM da duoc train
+    // khai bao model
+    Ptr<SVM> svmNew;
+    // khai bao ten model
+    string svmFile = "/sdcard/GR2/opencv_svm_model.xml";
+    // load model SVM da train tren ubuntu su dung python
+    svmNew = Algorithm::load<SVM>(svmFile);
+
+    // khai bao mang vecto de chuyen doi vecto 128 chieu dlib vua trich chon duoc ve dang chuan de su dung SVM du doan ket qua
+    float sampleMat[128];
+    // khai bao va detect, tim ra vi tri khuon mat, chieu rong, chieu cao
+    std::vector<dlib::rectangle> faces_rec = detector(img);
+    for (int j = 0; j < face_descriptors.size(); j++)
+    {
+        int x, y, w, h;
+        x = faces_rec[j].left();
+        y = faces_rec[j].top();
+        w = faces_rec[j].right() - x;
+        h = faces_rec[j].bottom() - y;
+        cv::Point pt1(x, y);
+        cv::Point pt2(x + w, y + h);
+        cv::Point pt_text(x, faces_rec[j].bottom());
+        // chuyen sang dang du lieu chuan
+        for (int i = 0; i < 128; i++)
+        {
+            //data[i] = face_descriptors[0](i);
+            sampleMat[i] = face_descriptors[j](i);
+
+        }
+        // chuyen sang du lieu chuan la tham so dau vao cho ham predict
+        Mat data(1, 128, CV_32FC1, sampleMat);
+        float value_svm = svmNew->predict(data);
+        // ve va show ket qua.
+        if (value_svm == 1)
+        {
+            return 1;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+return -2;
 }
 
 
